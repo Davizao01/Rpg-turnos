@@ -77,13 +77,15 @@
             <p><strong>Defesa:</strong> <span id="playerDefense">5</span> 🛡️</p>
             <p><strong>Moedas:</strong> <span id="playerCoins">500</span> 💰</p>
             <p><strong>Pontos:</strong> <span id="playerPoints">0</span> ✨</p>
+            <p><strong>Arma Equipadas:</strong> <span id="playerWeapon">Nenhuma</span></p>
+            <p><strong>Habilidade Equipadas:</strong> <span id="playerSkill">Nenhuma</span></p>
         </div>
 
         <!-- Status do Goblin -->
         <div class="status">
             <h3>Status do Goblin</h3>
-            <p><strong>Vida:</strong> <span id="goblinHealth">30</span> ❤️</p>
-            <p><strong>Força:</strong> <span id="goblinStrength">8</span> 💪</p>
+            <p><strong>Vida:</strong> <span id="goblinHealth">100</span> ❤️</p>
+            <p><strong>Força:</strong> <span id="goblinStrength">20</span> 💪</p>
         </div>
 
         <!-- Botões de Ação -->
@@ -103,7 +105,7 @@
 
         <!-- Loja -->
         <div id="shopSection" class="section">
-            <h3>Loja de Armas 🛒</h3>
+            <h3>Loja de Armas e Habilidades 🛒</h3>
             <button class="btn btn-close" onclick="toggleSection('shopSection')">Fechar</button>
             <div id="shopList"></div>
         </div>
@@ -122,57 +124,90 @@
             defense: 5,
             coins: 500,
             points: 0,
+            weapon: null,
+            skill: null,
         };
 
-        const goblin = {
-            health: 30,
-            strength: 8,
+        let goblin = {
+            health: 100,
+            strength: 20,
         };
 
-        const skillNames = ["Chama Eterna", "Lâmina Fantasma", "Escudo de Luz", "Impacto Sônico"];
-        const weaponNames = ["Espada do Crepúsculo", "Machado do Dragão", "Arco do Amanhecer", "Lança da Tormenta"];
+        // Gerar Goblin com força e vida aleatórias
+        function regenerateGoblin() {
+            goblin.health = Math.floor(Math.random() * 1000) + 100;
+            goblin.strength = Math.floor(Math.random() * 1000) + 1;
+            updateStatus();
+        }
 
-        const logContainer = document.getElementById("log");
+        // Habilidades
+        const skills = [];
+        for (let i = 1; i <= 100; i++) {
+            skills.push({
+                name: `Habilidade ${i}`,
+                description: `Descrição da habilidade ${i}`,
+                cost: Math.floor(Math.random() * 50) + 5,
+            });
+        }
 
+        // Armas
+        const weapons = [];
+        for (let i = 1; i <= 50; i++) {
+            weapons.push({
+                name: `Arma ${i}`,
+                description: `Descrição da arma ${i}`,
+                cost: Math.floor(Math.random() * 500) + 50,
+                strengthBonus: Math.floor(Math.random() * 10) + 1,
+            });
+        }
+
+        // Atualiza os status
         function updateStatus() {
             document.getElementById("playerHealth").innerText = player.health;
             document.getElementById("playerStrength").innerText = player.strength;
             document.getElementById("playerDefense").innerText = player.defense;
             document.getElementById("playerCoins").innerText = player.coins;
             document.getElementById("playerPoints").innerText = player.points;
+            document.getElementById("playerWeapon").innerText = player.weapon ? player.weapon.name : "Nenhuma";
+            document.getElementById("playerSkill").innerText = player.skill ? player.skill.name : "Nenhuma";
             document.getElementById("goblinHealth").innerText = goblin.health;
+            document.getElementById("goblinStrength").innerText = goblin.strength;
         }
 
+        // Log de mensagens
         function logMessage(message) {
             const logEntry = document.createElement("p");
             logEntry.textContent = message;
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight;
+            document.getElementById("log").appendChild(logEntry);
+            document.getElementById("log").scrollTop = document.getElementById("log").scrollHeight;
         }
 
-        function toggleSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            section.classList.toggle("visible");
-        }
-
+        // Atacar Goblin
         function attackGoblin() {
-            const damageToGoblin = Math.max(player.strength - 3, 1);
+            let damageToGoblin = player.strength;
+
+            if (player.skill) {
+                damageToGoblin += 10; // Se tiver habilidade, aumenta o dano
+            }
+
             goblin.health -= damageToGoblin;
             logMessage(`⚔️ Você atacou o Goblin e causou ${damageToGoblin} de dano!`);
-            
+
             if (goblin.health <= 0) {
                 goblin.health = 0;
                 logMessage("🎉 Você derrotou o Goblin!");
-                player.coins += 50;
-                player.points += 10;
+                player.coins += 100;
+                player.points += 20;
+                regenerateGoblin(); // Renova o Goblin
             } else {
                 goblinAttack();
             }
             updateStatus();
         }
 
+        // Atacar o Jogador
         function goblinAttack() {
-            const damageToPlayer = Math.max(goblin.strength - player.defense, 1);
+            let damageToPlayer = Math.max(goblin.strength - player.defense, 1);
             player.health -= damageToPlayer;
             logMessage(`👹 O Goblin atacou e causou ${damageToPlayer} de dano!`);
 
@@ -183,18 +218,88 @@
             updateStatus();
         }
 
+        // Comprar Pontos
         function buyPoints() {
-            if (player.coins >= 100) {
-                player.coins -= 100;
-                player.points += 10;
-                logMessage("💰 Você comprou 10 pontos por 100 moedas!");
+            if (player.coins >= 10000) {
+                player.coins -= 10000;
+                player.points += 1;
+                logMessage("✨ Você comprou 1 ponto!");
                 updateStatus();
             } else {
-                logMessage("❌ Você não tem moedas suficientes para comprar pontos.");
+                logMessage("💰 Moedas insuficientes!");
             }
         }
 
-        updateStatus();
+        // Abrir e Fechar Seções
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle("visible");
+            if (sectionId === "skillsSection") {
+                openSkillsSection();
+            } else if (sectionId === "shopSection") {
+                openShop();
+            }
+        }
+
+        // Mostrar Habilidades
+        function openSkillsSection() {
+            const skillsList = document.getElementById("skillsList");
+            skillsList.innerHTML = "";
+            skills.forEach(skill => {
+                const skillItem = document.createElement("div");
+                skillItem.classList.add("skill-item");
+                skillItem.innerHTML = `
+                    <p><strong>${skill.name}</strong>: ${skill.description} (Custo: ${skill.cost} moedas)</p>
+                    <button class="btn" onclick="equipSkill('${skill.name}')">Equipar</button>
+                `;
+                skillsList.appendChild(skillItem);
+            });
+        }
+
+        // Equipar Habilidade
+        function equipSkill(skillName) {
+            const skill = skills.find(s => s.name === skillName);
+            if (player.coins >= skill.cost) {
+                player.coins -= skill.cost;
+                player.skill = skill;
+                logMessage(`🌟 Você equipou a habilidade "${skillName}"!`);
+                updateStatus();
+            } else {
+                logMessage("💰 Moedas insuficientes para essa habilidade.");
+            }
+        }
+
+        // Mostrar Loja
+        function openShop() {
+            const shopList = document.getElementById("shopList");
+            shopList.innerHTML = "";
+            weapons.forEach(weapon => {
+                const weaponItem = document.createElement("div");
+                weaponItem.classList.add("shop-item");
+                weaponItem.innerHTML = `
+                    <p><strong>${weapon.name}</strong>: ${weapon.description} (Custo: ${weapon.cost} moedas)</p>
+                    <button class="btn" onclick="equipWeapon('${weapon.name}')">Equipar</button>
+                `;
+                shopList.appendChild(weaponItem);
+            });
+        }
+
+        // Equipar Arma
+        function equipWeapon(weaponName) {
+            const weapon = weapons.find(w => w.name === weaponName);
+            if (player.coins >= weapon.cost) {
+                player.coins -= weapon.cost;
+                player.weapon = weapon;
+                player.strength += weapon.strengthBonus; // Aumento de força pela arma
+                logMessage(`⚔️ Você equipou a arma "${weaponName}"!`);
+                updateStatus();
+            } else {
+                logMessage("💰 Moedas insuficientes para essa arma.");
+            }
+        }
+
+        // Inicializar o jogo
+        regenerateGoblin(); // Inicializa o Goblin com vida e força
     </script>
 </body>
 </html>
